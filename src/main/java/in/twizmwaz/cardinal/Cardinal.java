@@ -37,6 +37,7 @@ import in.twizmwaz.cardinal.command.CommandSetNext;
 import in.twizmwaz.cardinal.command.CommandStart;
 import in.twizmwaz.cardinal.command.provider.LoadedMapProvider;
 import in.twizmwaz.cardinal.command.provider.TeamProvider;
+import in.twizmwaz.cardinal.event.EventWrapperListener;
 import in.twizmwaz.cardinal.event.matchthread.MatchThreadMakeEvent;
 import in.twizmwaz.cardinal.match.Match;
 import in.twizmwaz.cardinal.match.MatchThread;
@@ -110,6 +111,7 @@ public final class Cardinal extends JavaPlugin {
       setEnabled(false);
       return;
     }
+    new EventWrapperListener();
     Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
           ModuleRegistry registry =
               new ModuleRegistry(moduleLoader.makeModules(moduleLoader.getModuleEntries()));
