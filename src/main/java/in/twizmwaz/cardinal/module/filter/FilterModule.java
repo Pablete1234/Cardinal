@@ -25,6 +25,7 @@
 
 package in.twizmwaz.cardinal.module.filter;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import in.twizmwaz.cardinal.Cardinal;
 import in.twizmwaz.cardinal.event.match.MatchModuleLoadCompleteEvent;
@@ -53,6 +54,7 @@ import in.twizmwaz.cardinal.module.filter.type.CauseFilter;
 import in.twizmwaz.cardinal.module.filter.type.CreatureFilter;
 import in.twizmwaz.cardinal.module.filter.type.CrouchingFilter;
 import in.twizmwaz.cardinal.module.filter.type.EntityFilter;
+import in.twizmwaz.cardinal.module.filter.type.FilterReference;
 import in.twizmwaz.cardinal.module.filter.type.FlyingFilter;
 import in.twizmwaz.cardinal.module.filter.type.HoldingFilter;
 import in.twizmwaz.cardinal.module.filter.type.LayerFilter;
@@ -84,12 +86,14 @@ import org.jdom2.Element;
 import org.jdom2.located.Located;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @ModuleEntry(depends = {RegionModule.class, TeamModule.class})
 public class FilterModule extends AbstractModule implements Listener {
 
   private Map<Match, Map<String, Filter>> filters = Maps.newHashMap();
+  private Map<Match, List<FilterReference>> references = Maps.newHashMap();
 
   //Static filters. Can be shared across matches, because they use no arguments
   public static final Filter ALLOW = new StaticFilter(FilterState.ALLOW);
@@ -114,6 +118,7 @@ public class FilterModule extends AbstractModule implements Listener {
   @Override
   public boolean loadMatch(@NonNull Match match) {
     filters.put(match, Maps.newHashMap());
+    references.put(match, Lists.newArrayList());
     for (Element filtersElement : match.getMap().getDocument().getRootElement().getChildren("filters")) {
       for (Element filterElement : filtersElement.getChildren()) {
         filters.get(match).put("always", ALLOW);
@@ -125,6 +130,10 @@ public class FilterModule extends AbstractModule implements Listener {
         }
       }
     }
+    for (FilterReference reference : references.get(match)) {
+      reference.load(this, match);
+    }
+    references.remove(match);
     return true;
   }
 
@@ -156,6 +165,12 @@ public class FilterModule extends AbstractModule implements Listener {
 
   public Filter getFilter(@NonNull Match match, @NonNull String id) {
     return filters.get(match).get(id);
+  }
+
+  public Filter getFilterReference(@NonNull Match match, @NonNull String id) {
+    FilterReference reference = new FilterReference(id);
+    references.get(match).add(reference);
+    return reference;
   }
 
   /**
@@ -312,7 +327,7 @@ public class FilterModule extends AbstractModule implements Listener {
         for (String alternateAttribute : alternateAttributes) {
           String filterValue = element.getAttributeValue(alternateAttribute);
           if (filterValue != null) {
-            Filter filter = getFilter(match, filterValue);
+            Filter filter = getFilterReference(match, filterValue);
             if (filter != null) {
               return checkFilter(match, id, filter);
             }
@@ -321,7 +336,7 @@ public class FilterModule extends AbstractModule implements Listener {
 
         String filterValue = element.getAttributeValue("id");
         if (filterValue != null) {
-          Filter filter = getFilter(match, filterValue);
+          Filter filter = getFilterReference(match, filterValue);
           if (filter != null) {
             return checkFilter(match, id, filter);
           }
