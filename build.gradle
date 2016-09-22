@@ -37,6 +37,7 @@ dependencies {
     compile 'ee.ellytr.command:EllyCommand:2.0.4'
     compile 'ee.ellytr.chat:EllyChat:1.2.6'
     compile 'org.jdom:jdom2:2.0.6'
+    compile 'org.jdom:jdom2-contrib:2.0.5'
     compile 'org.ow2.asm:asm-all:5.0.4'
 
     testCompile('junit:junit:4.12')
@@ -57,6 +58,7 @@ shadowJar {
     append('LICENSE')
     dependencies {
         include(dependency('org.jdom:jdom2:2.0.6'))
+        include(dependency('org.jdom:jdom2-contrib:2.0.5'))
         relocate 'org.jdom2', 'in.twizmwaz.cardinal.libs.jdom2'
         include(dependency('org.ow2.asm:asm-all:5.0.4'))
         relocate 'org.objectweb.asm', 'in.twizmwaz.cardinal.libs.asm'

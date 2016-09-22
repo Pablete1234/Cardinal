@@ -34,6 +34,7 @@ import in.twizmwaz.cardinal.match.Match;
 import in.twizmwaz.cardinal.module.AbstractListenerModule;
 import in.twizmwaz.cardinal.module.ModuleEntry;
 import in.twizmwaz.cardinal.module.ModuleError;
+import in.twizmwaz.cardinal.module.ModuleReporter;
 import in.twizmwaz.cardinal.module.apply.AppliedModule;
 import in.twizmwaz.cardinal.module.apply.AppliedRegion;
 import in.twizmwaz.cardinal.module.apply.ApplyType;
@@ -73,7 +74,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.located.Located;
 
 import java.util.List;
 
@@ -82,168 +82,59 @@ public class WoolModule extends AbstractListenerModule {
 
   @Override
   public boolean loadMatch(Match match) {
+    ModuleReporter reporter = new ModuleReporter(this, match);
     Document document = match.getMap().getDocument();
-    for (Element woolsElement : document.getRootElement().getChildren("wools")) {
-      for (Element woolElement : woolsElement.getChildren("wool")) {
-        Located located = (Located) woolElement;
-        String colorValue = ParseUtil.getFirstAttribute("color", woolElement, woolsElement);
-        String id = ParseUtil.getFirstAttribute("id", woolElement, woolsElement);
-        if (id == null) {
-          id = colorValue;
-        }
-
-        String requiredValue = ParseUtil.getFirstAttribute("required", woolElement, woolsElement);
-        boolean required = requiredValue == null || Numbers.parseBoolean(requiredValue);
-
-        String teamValue = ParseUtil.getFirstAttribute("team", woolElement, woolsElement);
-        if (teamValue == null) {
-          errors.add(new ModuleError(this, match.getMap(), new String[]{"No team specified for wool",
-              "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-        Team team = Cardinal.getModule(TeamModule.class).getTeamById(match, teamValue);
-        if (team == null) {
-          errors.add(new ModuleError(this, match.getMap(), new String[]{"Invalid team specified for wool",
-              "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-
-        if (colorValue == null) {
-          errors.add(new ModuleError(this, match.getMap(), new String[]{"No color specified for wool",
-              "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-        DyeColor color;
-        try {
-          color = DyeColor.valueOf(Strings.getTechnicalName(colorValue));
-        } catch (IllegalArgumentException e) {
-          errors.add(new ModuleError(this, match.getMap(), new String[]{"Invalid color specified for wool",
-              "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-
-        RegionModule regionModule = Cardinal.getModule(RegionModule.class);
-        Region monument;
-        try {
-          monument = regionModule.getRegion(match, woolElement, "monument");
-        } catch (RegionException e) {
-          errors.add(new ModuleError(this, match.getMap(),
-              new String[]{RegionModule.getRegionError(e, "monument", "wool"),
-                  "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-        if (monument == null && woolsElement.getAttribute("monument") != null) {
-          monument = regionModule.getRegionById(match, woolsElement.getAttributeValue("monument"));
-        }
-        if (monument == null) {
-          errors.add(new ModuleError(this, match.getMap(), new String[]{"No monument specified for wool",
-              "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          continue;
-        }
-
-        String craftableValue = ParseUtil.getFirstAttribute("craftable", woolElement, woolsElement);
-        boolean craftable = craftableValue != null && Numbers.parseBoolean(craftableValue);
-
-        String showValue = ParseUtil.getFirstAttribute("show", woolElement, woolsElement);
-        boolean show = showValue == null || Numbers.parseBoolean(showValue);
-
-        String locationValue = ParseUtil.getFirstAttribute("location", woolElement, woolsElement);
-        Proto proto = match.getMap().getProto();
-        if (locationValue != null && proto.isBefore("1.4.0")) {
-          errors.add(new ModuleError(this, match.getMap(),
-              new String[]{"Attribute \"location\" is supported in proto 1.4.0 or later",
-                  "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-        } else if (locationValue == null && proto.isAfterOrAt("1.4.0")) {
-          errors.add(new ModuleError(this, match.getMap(),
-              new String[]{"Attribute \"location\" should be specified for wool in proto 1.4.0 or later",
-                  "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-        }
-        Vector location = null;
-        if (locationValue != null) {
-          String[] coordinates = locationValue.split(",");
-          if (coordinates.length != 3) {
-            errors.add(new ModuleError(this, match.getMap(), new String[]{"Invalid location format specified for wool",
-                "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-            continue;
-          }
-          try {
-            location = new Vector(Double.parseDouble(coordinates[0].trim()),
-                Double.parseDouble(coordinates[1].trim()),
-                Double.parseDouble(coordinates[2].trim()));
-          } catch (NumberFormatException e) {
-            errors.add(new ModuleError(this, match.getMap(), new String[]{"Invalid location specified for wool",
-                "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-            continue;
-          }
-        }
-
-        ProximityMetric woolProximityMetric = ProximityMetric.CLOSEST_KILL;
-        String woolProximityMetricValue = ParseUtil.getFirstAttribute("woolproximity-metric",
-            woolElement, woolsElement);
-        if (woolProximityMetricValue != null) {
-          try {
-            woolProximityMetric = ProximityMetric.valueOf(Strings.getTechnicalName(woolProximityMetricValue));
-          } catch (IllegalArgumentException e) {
-            errors.add(new ModuleError(this, match.getMap(),
-                new String[]{"Invalid wool proximity metric specified for wool",
-                    "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-            continue;
-          }
-        }
-
-        String woolProximityHorizontalValue =
-            ParseUtil.getFirstAttribute("woolproximity-horizontal", woolElement, woolsElement);
-        boolean woolProximityHorizontal = woolProximityHorizontalValue != null
-            && Numbers.parseBoolean(woolProximityHorizontalValue);
-
-        ProximityMetric monumentProximityMetric = ProximityMetric.CLOSEST_BLOCK;
-        String monumentProximityMetricValue =
-            ParseUtil.getFirstAttribute("monumentproximity-metric", woolElement, woolsElement);
-        if (monumentProximityMetricValue != null) {
-          try {
-            monumentProximityMetric = ProximityMetric.valueOf(
-                Strings.getTechnicalName(monumentProximityMetricValue));
-          } catch (IllegalArgumentException e) {
-            errors.add(new ModuleError(this, match.getMap(),
-                new String[]{"Invalid monument proximity metric specified for wool",
-                    "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-            continue;
-          }
-        }
-
-        String monumentProximityHorizontalValue =
-            ParseUtil.getFirstAttribute("monumentproximity-horizontal", woolElement, woolsElement);
-        boolean monumentProximityHorizontal = monumentProximityHorizontalValue != null
-            && Numbers.parseBoolean(monumentProximityHorizontalValue);
-
-        Wool wool = new Wool(
-            match, id, required, team, color, monument, craftable, show, location,
-            new ProximityRule(woolProximityMetric, woolProximityHorizontal),
-            new ProximityRule(monumentProximityMetric, monumentProximityHorizontal)
-        );
-        if (!IdModule.get().add(match, id, wool)) {
-          errors.add(new ModuleError(this, match.getMap(),
-              new String[]{"Wool id is not valid or already in use",
-                  "Element at " + located.getLine() + ", " + located.getColumn()}, false));
-          IdModule.get().add(match, null, wool, true);
-        }
-        AppliedModule appliedModule = Cardinal.getModule(AppliedModule.class);
-        appliedModule.add(match, new WoolMonumentPlace(wool), true);
-        appliedModule.add(match,
-            new AppliedRegion(ApplyType.BLOCK_BREAK, monument, new StaticFilter(FilterState.DENY),
-                new LocalizedComponentBuilder(
-                    ChatConstant.getConstant("objective.wool.error.break"),
-                    wool.getComponent()
-                ).color(ChatColor.RED).build()), true);
-      }
+    for (Element woolElement : ParseUtil.getElementsIn(document.getRootElement(), "wools", "wool")) {
+      parseWool(reporter, woolElement);
+      reporter.reset();
     }
     return true;
+  }
+
+  public static Wool parseWool(ModuleReporter reporter, Element element) {
+    String id = reporter.getAttr(element, "id", String.class, null);
+    if (id != null) {
+      reporter.checkId(element.getAttribute(id), id);
+    }
+
+    boolean required = reporter.getAttr(element, "required", Boolean.class, true);
+    Team team = reporter.getAttr(element, "team", Team.class);
+    DyeColor color = reporter.getAttr(element, "color", DyeColor.class);
+    Region monument = reporter.getProp(element, "monument", Region.class);
+    boolean craftable = reporter.getAttr(element, "craftable", Boolean.class, false);
+    boolean show = reporter.getAttr(element, "show", Boolean.class, true);
+
+    Vector location = reporter.getAttr(element, "location", Vector.class, null);
+
+    ProximityRule woolProximity = new ProximityRule(
+        reporter.getAttr(element, "woolproximity-metric", ProximityMetric.class, ProximityMetric.CLOSEST_KILL),
+        reporter.getAttr(element, "woolproximity-horizontal", Boolean.class, false));
+    ProximityRule monumentProximity = new ProximityRule(
+        reporter.getAttr(element, "monumentproximity-metric", ProximityMetric.class, ProximityMetric.CLOSEST_BLOCK),
+        reporter.getAttr(element, "monumentproximity-horizontal", Boolean.class, false));
+
+    if (reporter.isCanLoad()) {
+      Wool wool = new Wool(reporter.getMatch(), required, team, color, monument, craftable,
+          show, location, woolProximity, monumentProximity);
+      IdModule.get().add(reporter.getMatch(), null, wool, true);
+
+      AppliedModule appliedModule = Cardinal.getModule(AppliedModule.class);
+      appliedModule.add(reporter.getMatch(), new WoolMonumentPlace(wool), true);
+      appliedModule.add(reporter.getMatch(),
+          new AppliedRegion(ApplyType.BLOCK_BREAK, monument, new StaticFilter(FilterState.DENY),
+              new LocalizedComponentBuilder(
+                  ChatConstant.getConstant("objective.wool.error.break"),
+                  wool.getComponent()
+              ).color(ChatColor.RED).build()), true);
+      return wool;
+    } else {
+      return null;
+    }
   }
 
   public List<Wool> getWools(@NonNull Match match) {
     return IdModule.get().getList(match, Wool.class);
   }
-
 
   /**
    * Checks if the wool has been picked up when a player clicks on an item in their inventory.

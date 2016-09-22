@@ -38,7 +38,6 @@ public abstract class Objective {
 
   @NonNull
   protected final Match match;
-  private final String id;
   private final boolean required;
   protected final boolean show;
 

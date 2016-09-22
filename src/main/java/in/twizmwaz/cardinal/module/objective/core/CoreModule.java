@@ -170,7 +170,7 @@ public class CoreModule extends AbstractListenerModule {
       boolean proximityHorizontal = proximityHorizontalValue != null
           && Numbers.parseBoolean(proximityHorizontalValue);
 
-      Core core = new Core(match, id, name, required, region, leak, material, team, modeChanges, show,
+      Core core = new Core(match, name, required, region, leak, material, team, modeChanges, show,
           proximityMetric, proximityHorizontal);
       if (!IdModule.get().add(match, id, core)) {
         errors.add(new ModuleError(this, match.getMap(),

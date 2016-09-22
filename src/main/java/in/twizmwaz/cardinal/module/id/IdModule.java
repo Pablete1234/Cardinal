@@ -97,6 +97,16 @@ public class IdModule extends AbstractModule {
   }
 
   /**
+   * Checks if the id could be added to the match
+   * @param match The match to try the object to.
+   * @param id The id to check.
+   * @return if the object isn't null and isn't duplicated.
+   */
+  public boolean canAdd(Match match, String id) {
+    return id != null && !ids.get(match).containsKey(id);
+  }
+
+  /**
    * Get an object with the given id.
    * @param match The match the object belongs to.
    * @param id The id of the object.

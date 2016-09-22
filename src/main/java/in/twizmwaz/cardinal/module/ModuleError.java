@@ -26,14 +26,46 @@
 package in.twizmwaz.cardinal.module;
 
 import in.twizmwaz.cardinal.module.repository.LoadedMap;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
+import org.jdom2.contrib.input.LineNumberElement;
 
 @Data
+@AllArgsConstructor
 public final class ModuleError {
 
   private final Module module;
   private final LoadedMap map;
   private final String[] message;
   private final boolean critical;
+
+  public ModuleError(Module module, LoadedMap map, boolean critical, String... message) {
+    this(module, map, message, critical);
+  }
+
+  public ModuleError(Module module, LoadedMap map, Element element, String message, boolean critical) {
+    this(module, map, critical, getErrorLocation(element), message);
+  }
+
+  public ModuleError(Module module, LoadedMap map, Attribute attr, String message, boolean critical) {
+    this(module, map, critical, getErrorLocation(attr), message);
+  }
+
+  private static String getErrorLocation(Element element) {
+    String result = "'" + element.getName() + "' element";
+    if (element instanceof LineNumberElement) {
+      LineNumberElement lineElement = (LineNumberElement) element;
+      result += lineElement.getStartLine() == lineElement.getEndLine()
+          ? " on line " + lineElement.getStartLine()
+          : " from line " + lineElement.getStartLine() + " to " + lineElement.getEndLine();
+    }
+    return result;
+  }
+
+  private static String getErrorLocation(Attribute attribute) {
+    return "'" + attribute.getName() + "' attribute in " + getErrorLocation(attribute.getParent());
+  }
 
 }

@@ -103,7 +103,6 @@ public class Destroyable extends Objective implements OwnedObjective, EntryUpdat
 
   /**
    * @param match               The match the destroyable belongs to.
-   * @param id                  This destroyable's ID.
    * @param name                This destroyable's name.
    * @param required            Determines if this objective is required to win the match.
    * @param region              The region that contains this destroyable.
@@ -119,12 +118,12 @@ public class Destroyable extends Objective implements OwnedObjective, EntryUpdat
    * @param proximityHorizontal Determines if only horizontal distance is considered when
    *                            calculating proximity.
    */
-  public Destroyable(Match match, String id, String name, boolean required, Region region,
+  public Destroyable(Match match, String name, boolean required, Region region,
                      MaterialPattern materials, Team owner,
                      double completion, boolean modeChanges, boolean showProgress,
                      boolean repairable, boolean sparks, boolean show,
                      ProximityMetric proximityMetric, boolean proximityHorizontal) {
-    super(match, id, required, show);
+    super(match, required, show);
     this.name = name;
     this.materials = materials;
     this.owner = owner;

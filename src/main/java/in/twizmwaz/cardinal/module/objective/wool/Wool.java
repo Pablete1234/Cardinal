@@ -83,9 +83,9 @@ public class Wool extends Objective implements Listener, EntryUpdater {
    * @param monumentProximityRule       The proximity rule that determines how to calculate proximity
    *                                    after picking up the wool.
    */
-  public Wool(Match match, String id, boolean required, Team team, DyeColor color, Region monument, boolean craftable,
+  public Wool(Match match, boolean required, Team team, DyeColor color, Region monument, boolean craftable,
               boolean show, Vector location, ProximityRule woolProximityRule, ProximityRule monumentProximityRule) {
-    super(match, id, required, show);
+    super(match, required, show);
     this.team = team;
     this.color = color;
     this.monument = monument;

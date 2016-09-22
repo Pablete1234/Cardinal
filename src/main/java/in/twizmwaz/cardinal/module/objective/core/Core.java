@@ -83,7 +83,6 @@ public class Core extends Objective implements OwnedObjective, EntryUpdater {
 
   /**
    * @param match               The match the core is part of.
-   * @param id                  The core's ID, for usage in code and XML.
    * @param name                The core's name, for usage by the user.
    * @param required            Determines if this objective is required to win the match.
    * @param region              The region that contains this core.
@@ -96,10 +95,10 @@ public class Core extends Objective implements OwnedObjective, EntryUpdater {
    * @param proximityHorizontal Determines if only horizontal distance is considered when
    *                            calculating proximity.
    */
-  public Core(Match match, String id, String name, boolean required, Region region, int leak,
+  public Core(Match match, String name, boolean required, Region region, int leak,
               MaterialPattern material, Team owner, boolean modeChanges,
               boolean show, ProximityMetric proximityMetric, boolean proximityHorizontal) {
-    super(match, id, required, show);
+    super(match, required, show);
     this.name = name;
     this.leak = leak;
     this.material = material;

@@ -164,7 +164,7 @@ public class DestroyableModule extends AbstractListenerModule {
         boolean proximityHorizontal = proximityHorizontalValue != null
             && Numbers.parseBoolean(proximityHorizontalValue);
 
-        Destroyable destroyable = new Destroyable(match, id, name, required, region, materials, owner,
+        Destroyable destroyable = new Destroyable(match, name, required, region, materials, owner,
             completion, modeChanges, showProgress, repairable, sparks, show, proximityMetric, proximityHorizontal);
         if (!IdModule.get().add(match, id, destroyable)) {
           errors.add(new ModuleError(this, match.getMap(),
